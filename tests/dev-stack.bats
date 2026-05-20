@@ -136,6 +136,19 @@ teardown_git_repo() {
   teardown_git_repo
 }
 
+@test "init: finds templates via installed symlink when DEV_STACK_HOME is unset" {
+  setup_git_repo
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
+  unset DEV_STACK_HOME
+  pushd "$PROJECT_DIR" > /dev/null
+  run "$BIN_DIR/dev-stack" init
+  popd > /dev/null
+  [ "$status" -eq 0 ]
+  [ -f "$PROJECT_DIR/opencode.json" ]
+  teardown_git_repo
+}
+
 @test "init: copies cursor rules into .cursor/rules/" {
   setup_git_repo
   pushd "$PROJECT_DIR" > /dev/null

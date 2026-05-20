@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STACK_DIR="${DEV_STACK_HOME:-$HOME/dev-stack}"
+if [[ -n "${DEV_STACK_HOME:-}" ]]; then
+  STACK_DIR="$DEV_STACK_HOME"
+else
+  SCRIPT_PATH="${BASH_SOURCE[0]}"
+  while [[ -L "$SCRIPT_PATH" ]]; do
+    SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_PATH")" && pwd)"
+    SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+    [[ "$SCRIPT_PATH" != /* ]] && SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_PATH"
+  done
+  STACK_DIR="$(cd -P "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+fi
 BIN_DIR="${HOME}/.local/bin"
 
 _install_opencode() {
