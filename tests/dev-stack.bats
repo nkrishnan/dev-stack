@@ -168,8 +168,9 @@ teardown_git_repo() {
   setup_git_repo
   pushd "$PROJECT_DIR" > /dev/null
   "$STACK_DIR/bin/dev-stack" init
-  "$STACK_DIR/bin/dev-stack" init || true   # cp -n fails on second run; that's expected
+  run "$STACK_DIR/bin/dev-stack" init
   popd > /dev/null
+  [ "$status" -eq 0 ]
   local count
   count="$(grep -cxF ".env.local" "$PROJECT_DIR/.git/info/exclude")"
   [ "$count" -eq 1 ]
