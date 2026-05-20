@@ -13,6 +13,6 @@
     "OPENROUTER_API_KEY": "${localEnv:OPENROUTER_API_KEY}"
   },
   "onCreateCommand": "DEV_STACK_SKIP_TOOLS=1 bash install.sh",
-  "postCreateCommand": "sudo apt-get install -y -q jq shellcheck && pip install --quiet pre-commit && npm install -g bats",
+  "postCreateCommand": "sudo apt-get install -y -q jq shellcheck bats && pip install --quiet pre-commit",
   "remoteUser": "vscode"
 }
