@@ -1,0 +1,42 @@
+name: dev-stack CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: pip install pre-commit && sudo npm install -g bats
+
+      - name: Run pre-commit (shellcheck, JSON, YAML, formatting)
+        run: pre-commit run --all-files
+
+      - name: Run tests
+        run: bats tests/
+
+      - name: Integration test — dev-stack init
+        run: |
+          tmp=$(mktemp -d)
+          git -C "$tmp" init -b main
+          cd "$tmp"
+          DEV_STACK_HOME="$GITHUB_WORKSPACE" DEV_STACK_SKIP_TOOLS=1 OPENROUTER_API_KEY=test-key \
+            "$GITHUB_WORKSPACE/bin/dev-stack" init
+          test -f opencode.json
+          test -f .cursor/rules/dev-stack.md
+          grep -qxF .env.local .git/info/exclude
+          grep -qxF .opencode-auth.json .git/info/exclude
+
+      - name: Detect secrets with gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks detect --source . --no-banner

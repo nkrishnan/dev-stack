@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -n "${DEV_STACK_HOME:-}" ]]; then
+  STACK_DIR="$DEV_STACK_HOME"
+else
+  SCRIPT_PATH="${BASH_SOURCE[0]}"
+  while [[ -L "$SCRIPT_PATH" ]]; do
+    SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_PATH")" && pwd)"
+    SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+    [[ "$SCRIPT_PATH" != /* ]] && SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_PATH"
+  done
+  STACK_DIR="$(cd -P "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+fi
+BIN_DIR="${HOME}/.local/bin"
+
+_install_opencode() {
+  if command -v opencode &>/dev/null; then return; fi
+  echo "Installing opencode..."
+  curl -fsSL https://opencode.ai/install | sh
+}
+
+_install_mise() {
+  if command -v mise &>/dev/null; then return; fi
+  echo "Installing mise..."
+  curl -fsSL https://mise.run | sh
+}
+
+_install_uv() {
+  if command -v uv &>/dev/null; then return; fi
+  echo "Installing uv..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+}
+
+_install_specify_cli() {
+  if command -v specify &>/dev/null; then return; fi
+  echo "Installing specify-cli (spec-kit)..."
+  local version
+  version="$(curl -fsSL https://api.github.com/repos/github/spec-kit/releases/latest | grep '"tag_name"' | cut -d'"' -f4)"
+  uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@${version}"
+}
+
+_ensure_bin_on_path() {
+  local snippet='export PATH="$HOME/.local/bin:$PATH"'
+  local added=0
+  for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [[ -f "$profile" ]]; then
+      grep -qF '.local/bin' "$profile" || { echo "$snippet" >> "$profile"; added=1; }
+    fi
+  done
+  # No profile existed yet — create .bashrc so the next shell has it
+  if [[ $added -eq 0 && ! -f "$HOME/.bashrc" ]]; then
+    echo "$snippet" > "$HOME/.bashrc"
+  fi
+  # Also apply to the current session so tools installed next are findable
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH" ;;
+  esac
+}
+
+install_stack() {
+  mkdir -p "$BIN_DIR"
+  ln -sfn "$STACK_DIR/bin/dev-stack" "$BIN_DIR/dev-stack"
+  _ensure_bin_on_path
+
+  if [[ "${DEV_STACK_SKIP_TOOLS:-}" != "1" ]]; then
+    _install_opencode
+    _install_mise
+    _install_uv
+    _install_specify_cli
+  fi
+
+  if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
+    echo "Reminder: set OPENROUTER_API_KEY in your environment or Codespaces secrets."
+  fi
+}
+
+init_project() {
+  cp -n "$STACK_DIR/templates/project/opencode.json" ./opencode.json
+  mkdir -p .cursor/rules
+  cp -n "$STACK_DIR/templates/project/.cursor/rules/dev-stack.md" .cursor/rules/dev-stack.md
+  touch .git/info/exclude
+  grep -qxF ".env.local" .git/info/exclude || echo ".env.local" >> .git/info/exclude
+  grep -qxF ".opencode-auth.json" .git/info/exclude || echo ".opencode-auth.json" >> .git/info/exclude
+  echo "Dev stack initialized."
+}
+
+case "${1:-}" in
+  install) install_stack ;;
+  init) init_project ;;
+  *) echo "Usage: dev-stack install | init"; exit 1 ;;
+esac
