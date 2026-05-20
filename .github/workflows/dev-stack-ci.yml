@@ -26,7 +26,7 @@ jobs:
       - name: Integration test — dev-stack init
         run: |
           tmp=$(mktemp -d)
-          git -C "$tmp" init
+          git -C "$tmp" init -b main
           cd "$tmp"
           DEV_STACK_HOME="$GITHUB_WORKSPACE" DEV_STACK_SKIP_TOOLS=1 OPENROUTER_API_KEY=test-key \
             "$GITHUB_WORKSPACE/bin/dev-stack" init
