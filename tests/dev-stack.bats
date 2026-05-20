@@ -104,6 +104,58 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "install: opencode installer is executed with bash, not sh" {
+  local fake_bin
+  fake_bin="$(mktemp -d)"
+  local calls_log
+  calls_log="$TEST_HOME/shell-calls.log"
+
+  cat > "$fake_bin/curl" <<'EOF'
+#!/usr/bin/env bash
+echo "#!/usr/bin/env bash"
+echo "exit 0"
+EOF
+
+  cat > "$fake_bin/bash" <<EOF
+#!/usr/bin/env bash
+echo "bash" >> "$calls_log"
+cat > /dev/null
+exit 0
+EOF
+
+  cat > "$fake_bin/sh" <<EOF
+#!/usr/bin/env bash
+echo "sh" >> "$calls_log"
+cat > /dev/null
+exit 0
+EOF
+
+  cat > "$fake_bin/mise" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+
+  cat > "$fake_bin/uv" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+
+  cat > "$fake_bin/specify" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+
+  chmod +x "$fake_bin/curl" "$fake_bin/bash" "$fake_bin/sh" "$fake_bin/mise" "$fake_bin/uv" "$fake_bin/specify"
+
+  PATH="$fake_bin:/usr/bin:/bin" DEV_STACK_SKIP_TOOLS=0 run "$STACK_DIR/bin/dev-stack" install
+
+  [ "$status" -eq 0 ]
+  grep -qxF "bash" "$calls_log"
+  ! grep -qxF "sh" "$calls_log"
+
+  rm -rf "$fake_bin"
+}
+
 # ── init ─────────────────────────────────────────────────────────────────────
 
 setup_git_repo() {

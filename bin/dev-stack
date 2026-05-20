@@ -17,19 +17,19 @@ BIN_DIR="${HOME}/.local/bin"
 _install_opencode() {
   if command -v opencode &>/dev/null; then return; fi
   echo "Installing opencode..."
-  curl -fsSL https://opencode.ai/install | sh
+  curl -fsSL https://opencode.ai/install | bash
 }
 
 _install_mise() {
   if command -v mise &>/dev/null; then return; fi
   echo "Installing mise..."
-  curl -fsSL https://mise.run | sh
+  curl -fsSL https://mise.run | bash
 }
 
 _install_uv() {
   if command -v uv &>/dev/null; then return; fi
   echo "Installing uv..."
-  curl -LsSf https://astral.sh/uv/install.sh | sh
+  curl -LsSf https://astral.sh/uv/install.sh | bash
 }
 
 _install_specify_cli() {
