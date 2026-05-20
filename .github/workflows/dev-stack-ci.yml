@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install dependencies
-        run: pip install pre-commit && npm install -g bats
+        run: pip install pre-commit && sudo npm install -g bats
 
       - name: Run pre-commit (shellcheck, JSON, YAML, formatting)
         run: pre-commit run --all-files
