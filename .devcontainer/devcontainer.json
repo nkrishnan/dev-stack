@@ -1,0 +1,14 @@
+{
+  "name": "dev-stack",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "onCreateCommand": "bash install.sh",
+  "postCreateCommand": "echo 'Dev container ready.'",
+  "remoteUser": "vscode"
+}

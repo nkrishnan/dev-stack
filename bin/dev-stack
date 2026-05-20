@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STACK_DIR="${DEV_STACK_HOME:-$HOME/dev-stack}"
+BIN_DIR="${HOME}/.local/bin"
+
+install_stack() {
+  mkdir -p "$BIN_DIR"
+  ln -sfn "$STACK_DIR/bin/dev-stack" "$BIN_DIR/dev-stack"
+  case ":$PATH:" in
+    *":$BIN_DIR:"*) ;;
+    *) echo "Add $BIN_DIR to PATH." ;;
+  esac
+}
+
+init_project() {
+  cp -n "$STACK_DIR/templates/project/opencode.json" ./opencode.json
+  mkdir -p .cursor/rules
+  cp -n "$STACK_DIR/templates/project/.cursor/rules/dev-stack.md" .cursor/rules/dev-stack.md
+  touch .git/info/exclude
+  grep -qxF ".env.local" .git/info/exclude || echo ".env.local" >> .git/info/exclude
+  grep -qxF ".opencode-auth.json" .git/info/exclude || echo ".opencode-auth.json" >> .git/info/exclude
+  echo "Dev stack initialized."
+}
+
+case "${1:-}" in
+  install) install_stack ;;
+  init) init_project ;;
+  *) echo "Usage: dev-stack install | init"; exit 1 ;;
+esac
