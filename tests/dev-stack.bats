@@ -151,7 +151,7 @@ EOF
 
   [ "$status" -eq 0 ]
   grep -qxF "bash" "$calls_log"
-  ! grep -qxF "sh" "$calls_log"
+  run ! grep -qxF "sh" "$calls_log"
 
   rm -rf "$fake_bin"
 }
