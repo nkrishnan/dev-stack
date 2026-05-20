@@ -31,6 +31,7 @@ teardown() {
 }
 
 @test "install.sh symlink is executable" {
-  bash "$STACK_DIR/install.sh"
+  run bash "$STACK_DIR/install.sh"
+  [ "$status" -eq 0 ]
   [ -x "$TEST_HOME/.local/bin/dev-stack" ]
 }
