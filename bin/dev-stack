@@ -4,13 +4,45 @@ set -euo pipefail
 STACK_DIR="${DEV_STACK_HOME:-$HOME/dev-stack}"
 BIN_DIR="${HOME}/.local/bin"
 
+_install_opencode() {
+  if command -v opencode &>/dev/null; then return; fi
+  echo "Installing opencode..."
+  curl -fsSL https://opencode.ai/install | sh
+}
+
+_install_mise() {
+  if command -v mise &>/dev/null; then return; fi
+  echo "Installing mise..."
+  curl -fsSL https://mise.run | sh
+}
+
+_ensure_bin_on_path() {
+  local snippet='export PATH="$HOME/.local/bin:$PATH"'
+  local added=0
+  for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [[ -f "$profile" ]]; then
+      grep -qF '.local/bin' "$profile" || { echo "$snippet" >> "$profile"; added=1; }
+    fi
+  done
+  # No profile existed yet — create .bashrc so the next shell has it
+  if [[ $added -eq 0 && ! -f "$HOME/.bashrc" ]]; then
+    echo "$snippet" > "$HOME/.bashrc"
+  fi
+}
+
 install_stack() {
   mkdir -p "$BIN_DIR"
   ln -sfn "$STACK_DIR/bin/dev-stack" "$BIN_DIR/dev-stack"
-  case ":$PATH:" in
-    *":$BIN_DIR:"*) ;;
-    *) echo "Add $BIN_DIR to PATH." ;;
-  esac
+  _ensure_bin_on_path
+
+  if [[ "${DEV_STACK_SKIP_TOOLS:-}" != "1" ]]; then
+    _install_opencode
+    _install_mise
+  fi
+
+  if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
+    echo "Reminder: set OPENROUTER_API_KEY in your environment or Codespaces secrets."
+  fi
 }
 
 init_project() {

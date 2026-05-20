@@ -12,6 +12,11 @@ setup() {
   STACK_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
   export DEV_STACK_HOME="$STACK_DIR"
   export BIN_DIR="$TEST_HOME/.local/bin"
+
+  # Prevent install from making real network calls during tests
+  export DEV_STACK_SKIP_TOOLS=1
+  # Suppress the API key reminder in test output
+  export OPENROUTER_API_KEY=test-key
 }
 
 teardown() {
@@ -48,13 +53,55 @@ teardown() {
   [ -L "$BIN_DIR/dev-stack" ]
 }
 
-@test "install: warns when BIN_DIR is not in PATH" {
-  # Ensure BIN_DIR is definitely absent from PATH
-  local stripped_path
-  stripped_path="$(echo "$PATH" | tr ':' '\n' | grep -v "$BIN_DIR" | tr '\n' ':')"
-  PATH="$stripped_path" run "$STACK_DIR/bin/dev-stack" install
+@test "install: adds BIN_DIR to .bashrc when not in PATH" {
+  touch "$TEST_HOME/.bashrc"
+  run "$STACK_DIR/bin/dev-stack" install
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Add"*"to PATH"* ]]
+  grep -q '.local/bin' "$TEST_HOME/.bashrc"
+}
+
+@test "install: does not duplicate PATH entry in .bashrc" {
+  touch "$TEST_HOME/.bashrc"
+  run "$STACK_DIR/bin/dev-stack" install
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$(grep -c '.local/bin' "$TEST_HOME/.bashrc")" -eq 1 ]
+}
+
+@test "install: creates .bashrc with PATH entry when no profile exists" {
+  # TEST_HOME has no shell profiles
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_HOME/.bashrc" ]
+  grep -q '.local/bin' "$TEST_HOME/.bashrc"
+}
+
+@test "install: adds BIN_DIR to .zshrc when present" {
+  touch "$TEST_HOME/.zshrc"
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
+  grep -q '.local/bin' "$TEST_HOME/.zshrc"
+}
+
+@test "install: reminds about OPENROUTER_API_KEY when unset" {
+  unset OPENROUTER_API_KEY
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"OPENROUTER_API_KEY"* ]]
+}
+
+@test "install: no API key reminder when OPENROUTER_API_KEY is set" {
+  OPENROUTER_API_KEY=test-key run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"OPENROUTER_API_KEY"* ]]
+}
+
+@test "install: DEV_STACK_SKIP_TOOLS=1 suppresses tool installation" {
+  # Verify install completes without attempting network calls by
+  # shadowing curl with a function that fails if called
+  curl() { echo "curl called unexpectedly"; return 1; }
+  export -f curl
+  DEV_STACK_SKIP_TOOLS=1 run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
 }
 
 # ── init ─────────────────────────────────────────────────────────────────────

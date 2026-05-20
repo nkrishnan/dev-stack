@@ -6,7 +6,7 @@ useDefault = true
 [[allowlist]]
 description = "Allow example/template model names in config files"
 paths = [
-  "openrouter/models.json",
+  "templates/llm-app/openrouter-models.json",
   "opencode/opencode.json",
   "templates/.*",
 ]

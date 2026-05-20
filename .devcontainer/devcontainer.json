@@ -6,9 +6,13 @@
       "installZsh": true,
       "configureZshAsDefaultShell": true
     },
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/python:1": {}
   },
-  "onCreateCommand": "bash install.sh",
-  "postCreateCommand": "echo 'Dev container ready.'",
+  "remoteEnv": {
+    "OPENROUTER_API_KEY": "${localEnv:OPENROUTER_API_KEY}"
+  },
+  "onCreateCommand": "DEV_STACK_SKIP_TOOLS=1 bash install.sh",
+  "postCreateCommand": "sudo apt-get install -y -q jq shellcheck && pip install --quiet pre-commit && npm install -g bats",
   "remoteUser": "vscode"
 }

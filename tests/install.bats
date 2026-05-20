@@ -9,6 +9,9 @@ setup() {
 
   export STACK_DIR
   STACK_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
+
+  export DEV_STACK_SKIP_TOOLS=1
+  export OPENROUTER_API_KEY=test-key
 }
 
 teardown() {
