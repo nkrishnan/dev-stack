@@ -12,7 +12,7 @@ Requires `uv`, which is also installed by `dev-stack install`.
 
 ```bash
 # Initialise spec-kit in a project
-specify init . --integration copilot   # or opencode, etc.
+specify init . --integration opencode   # or copilot, etc.
 
 # Write a constitution (project principles)
 /speckit.constitution Define principles for this project
