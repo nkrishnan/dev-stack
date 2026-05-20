@@ -1,18 +1,28 @@
 # Spec Kit
 
-The spec kit is a lightweight process for writing feature specs before implementation.
+[github/spec-kit](https://github.com/github/spec-kit) is a spec-driven development toolkit.
+Write a spec first; the coding agent implements it.
 
-## Purpose
+## Installation
 
-Specs live in `docs/decisions/` and capture:
+Installed automatically by `dev-stack install` via `uv tool install specify-cli`.
+Requires `uv`, which is also installed by `dev-stack install`.
 
-- Context and problem statement
-- Options considered
-- Decision and rationale
-- Consequences
+## Usage
 
-## Workflow
+```bash
+# Initialise spec-kit in a project
+specify init . --integration copilot   # or opencode, etc.
 
-1. Open a PR with a new spec in `docs/decisions/YYYY-MM-DD-title.md`.
-2. Get review and approval before implementation begins.
-3. Reference the spec in commit messages and implementation PRs.
+# Write a constitution (project principles)
+/speckit.constitution Define principles for this project
+
+# Write a spec for a feature
+/speckit.specify Build a user authentication flow with email + password
+```
+
+Slash commands are available inside your coding agent (opencode, Copilot, etc.).
+
+## Decisions log
+
+Architectural decisions that predate spec-kit live in `docs/decisions/`.
