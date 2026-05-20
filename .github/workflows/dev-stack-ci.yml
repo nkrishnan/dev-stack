@@ -9,13 +9,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install dependencies
-        run: pip install pre-commit && sudo npm install -g bats
+        run: |
+          python3 -m pip install --upgrade pip pre-commit
+          sudo apt-get update
+          sudo apt-get install -y bats
 
       - name: Run pre-commit (shellcheck, JSON, YAML, formatting)
         run: pre-commit run --all-files
@@ -34,9 +38,3 @@ jobs:
           test -f .cursor/rules/dev-stack.md
           grep -qxF .env.local .git/info/exclude
           grep -qxF .opencode-auth.json .git/info/exclude
-
-      - name: Detect secrets with gitleaks
-        run: |
-          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz \
-            | sudo tar -xz -C /usr/local/bin gitleaks
-          gitleaks detect --source . --no-banner

@@ -87,6 +87,24 @@ assert any('deepseek-r1' in k for k in model_keys)
   [ "$status" -eq 0 ]
 }
 
+@test "opencode configs include qwen free model" {
+  run python3 -c "
+import json
+data = json.load(open('$STACK_DIR/opencode/opencode.json'))
+assert '~qwen/qwen3-235b-a22b:free' in data['provider']['openrouter']['models']
+"
+  [ "$status" -eq 0 ]
+}
+
+@test "opencode configs include qwen paid model" {
+  run python3 -c "
+import json
+data = json.load(open('$STACK_DIR/opencode/opencode.json'))
+assert '~qwen/qwen3-235b-a22b' in data['provider']['openrouter']['models']
+"
+  [ "$status" -eq 0 ]
+}
+
 @test "opencode configs include gemini-2.5-pro" {
   run python3 -c "
 import json
