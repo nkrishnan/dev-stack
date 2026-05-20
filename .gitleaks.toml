@@ -3,7 +3,7 @@ title = "gitleaks config"
 [extend]
 useDefault = true
 
-[[allowlist]]
+[allowlist]
 description = "Allow example/template model names in config files"
 paths = [
   "templates/llm-app/openrouter-models.json",
