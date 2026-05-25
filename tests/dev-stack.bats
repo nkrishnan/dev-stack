@@ -82,6 +82,56 @@ teardown() {
   grep -q '.local/bin' "$TEST_HOME/.zshrc"
 }
 
+# Helper: create stub executables for all tools so _install_* functions
+# complete without network calls, allowing us to verify _ensure_path_dir_on_path
+# behaviour for ~/.opencode/bin without side effects.
+_setup_stub_tools() {
+  mkdir -p "$BIN_DIR"
+  for cmd in opencode mise uv specify; do
+    printf '#!/bin/sh\nexec true\n' > "$BIN_DIR/$cmd"
+    chmod +x "$BIN_DIR/$cmd"
+  done
+  export PATH="$BIN_DIR:$PATH"
+}
+
+@test "install: adds opencode bin dir to .bashrc" {
+  touch "$TEST_HOME/.bashrc"
+  _setup_stub_tools
+  unset DEV_STACK_SKIP_TOOLS
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
+  grep -q '.opencode/bin' "$TEST_HOME/.bashrc"
+}
+
+@test "install: adds opencode bin dir to .zshrc when present" {
+  touch "$TEST_HOME/.bashrc"
+  touch "$TEST_HOME/.zshrc"
+  _setup_stub_tools
+  unset DEV_STACK_SKIP_TOOLS
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$status" -eq 0 ]
+  grep -q '.opencode/bin' "$TEST_HOME/.zshrc"
+}
+
+@test "install: does not duplicate opencode bin dir in .bashrc" {
+  touch "$TEST_HOME/.bashrc"
+  _setup_stub_tools
+  unset DEV_STACK_SKIP_TOOLS
+  run "$STACK_DIR/bin/dev-stack" install
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$(grep -c '.opencode/bin' "$TEST_HOME/.bashrc")" -eq 1 ]
+}
+
+@test "install: does not duplicate opencode bin dir in .zshrc" {
+  touch "$TEST_HOME/.bashrc"
+  touch "$TEST_HOME/.zshrc"
+  _setup_stub_tools
+  unset DEV_STACK_SKIP_TOOLS
+  run "$STACK_DIR/bin/dev-stack" install
+  run "$STACK_DIR/bin/dev-stack" install
+  [ "$(grep -c '.opencode/bin' "$TEST_HOME/.zshrc")" -eq 1 ]
+}
+
 @test "install: reminds about OPENROUTER_API_KEY when unset" {
   unset OPENROUTER_API_KEY
   run "$STACK_DIR/bin/dev-stack" install

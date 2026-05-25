@@ -40,12 +40,13 @@ _install_specify_cli() {
   uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@${version}"
 }
 
-_ensure_bin_on_path() {
-  local snippet='export PATH="$HOME/.local/bin:$PATH"'
+_ensure_path_dir_on_path() {
+  local dir="$1"
+  local snippet="export PATH=\"$dir:\$PATH\""
   local added=0
   for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
     if [[ -f "$profile" ]]; then
-      grep -qF '.local/bin' "$profile" || { echo "$snippet" >> "$profile"; added=1; }
+      grep -qF "$dir" "$profile" || { echo "$snippet" >> "$profile"; added=1; }
     fi
   done
   # No profile existed yet — create .bashrc so the next shell has it
@@ -54,9 +55,13 @@ _ensure_bin_on_path() {
   fi
   # Also apply to the current session so tools installed next are findable
   case ":$PATH:" in
-    *":$HOME/.local/bin:"*) ;;
-    *) export PATH="$HOME/.local/bin:$PATH" ;;
+    *":$dir:"*) ;;
+    *) export PATH="$dir:$PATH" ;;
   esac
+}
+
+_ensure_bin_on_path() {
+  _ensure_path_dir_on_path "$HOME/.local/bin"
 }
 
 install_stack() {
@@ -66,6 +71,7 @@ install_stack() {
 
   if [[ "${DEV_STACK_SKIP_TOOLS:-}" != "1" ]]; then
     _install_opencode
+    _ensure_path_dir_on_path "$HOME/.opencode/bin"
     _install_mise
     _install_uv
     _install_specify_cli
