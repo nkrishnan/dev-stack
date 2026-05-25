@@ -92,8 +92,19 @@ init_project() {
   echo "Dev stack initialized."
 }
 
+bootstrap() {
+  if ! git rev-parse --git-dir &>/dev/null; then
+    echo "Error: not inside a git repository. Run from a project root." >&2
+    return 1
+  fi
+
+  install_stack
+  init_project
+}
+
 case "${1:-}" in
   install) install_stack ;;
   init) init_project ;;
-  *) echo "Usage: dev-stack install | init"; exit 1 ;;
+  bootstrap) bootstrap ;;
+  *) echo "Usage: dev-stack install | init | bootstrap"; exit 1 ;;
 esac

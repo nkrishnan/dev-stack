@@ -21,12 +21,14 @@ Or call the CLI directly:
 ```bash
 ./bin/dev-stack install
 ./bin/dev-stack init
+./bin/dev-stack bootstrap
 ```
 
 ## Commands
 
 - `dev-stack install`: installs the CLI symlink and tooling.
 - `dev-stack init`: copies project templates into the current git repository.
+- `dev-stack bootstrap`: installs the CLI/tooling, then initializes the current git repository.
 
 ## Notes
 

@@ -249,6 +249,35 @@ teardown_git_repo() {
   teardown_git_repo
 }
 
+# ── bootstrap ────────────────────────────────────────────────────────────────
+
+@test "bootstrap: installs and initializes in a git repository" {
+  setup_git_repo
+  pushd "$PROJECT_DIR" > /dev/null
+  run "$STACK_DIR/bin/dev-stack" bootstrap
+  popd > /dev/null
+  [ "$status" -eq 0 ]
+  [ -L "$BIN_DIR/dev-stack" ]
+  [ -f "$PROJECT_DIR/opencode.json" ]
+  [ -f "$PROJECT_DIR/.cursor/rules/dev-stack.md" ]
+  grep -qxF ".env.local" "$PROJECT_DIR/.git/info/exclude"
+  grep -qxF ".opencode-auth.json" "$PROJECT_DIR/.git/info/exclude"
+  [[ "$output" == *"Dev stack initialized."* ]]
+  teardown_git_repo
+}
+
+@test "bootstrap: exits 1 outside a git repository before installing" {
+  export PROJECT_DIR
+  PROJECT_DIR="$(mktemp -d)"
+  pushd "$PROJECT_DIR" > /dev/null
+  run "$STACK_DIR/bin/dev-stack" bootstrap
+  popd > /dev/null
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Error: not inside a git repository. Run from a project root."* ]]
+  [ ! -e "$BIN_DIR/dev-stack" ]
+  rm -rf "$PROJECT_DIR"
+}
+
 # ── usage ─────────────────────────────────────────────────────────────────────
 
 @test "unknown subcommand exits with status 1" {
@@ -259,5 +288,5 @@ teardown_git_repo() {
 @test "no arguments exits with status 1 and prints usage" {
   run "$STACK_DIR/bin/dev-stack"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Usage:"* ]]
+  [[ "$output" == *"Usage: dev-stack install | init | bootstrap"* ]]
 }
