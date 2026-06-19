@@ -87,7 +87,7 @@ teardown() {
 # behaviour for ~/.opencode/bin without side effects.
 _setup_stub_tools() {
   mkdir -p "$BIN_DIR"
-  for cmd in opencode mise uv specify; do
+  for cmd in opencode mise uv specify openspec; do
     printf '#!/bin/sh\nexec true\n' > "$BIN_DIR/$cmd"
     chmod +x "$BIN_DIR/$cmd"
   done
@@ -206,6 +206,31 @@ teardown_git_repo() {
   popd > /dev/null
   [ "$status" -eq 0 ]
   [ -f "$PROJECT_DIR/.cursor/rules/dev-stack.md" ]
+  teardown_git_repo
+}
+
+@test "init: configures openspec for opencode when openspec is available" {
+  setup_git_repo
+  mkdir -p "$BIN_DIR"
+  cat > "$BIN_DIR/node" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$BIN_DIR/node"
+  cat > "$BIN_DIR/openspec" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >> "$HOME/openspec-args.log"
+exit 0
+EOF
+  chmod +x "$BIN_DIR/openspec"
+  export PATH="$BIN_DIR:$PATH"
+
+  pushd "$PROJECT_DIR" > /dev/null
+  run "$STACK_DIR/bin/dev-stack" init
+  popd > /dev/null
+
+  [ "$status" -eq 0 ]
+  grep -qxF "init --tools opencode --profile custom" "$TEST_HOME/openspec-args.log"
   teardown_git_repo
 }
 

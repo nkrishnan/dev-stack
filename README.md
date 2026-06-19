@@ -5,8 +5,8 @@ Opinionated bootstrap for a development environment and project defaults.
 ## What it does
 
 - Installs and links the `dev-stack` CLI into `~/.local/bin`.
-- Optionally installs core tooling (`opencode`, `mise`, `uv`, `specify-cli`).
-- Initializes a project with shared config (`opencode.json`, Cursor rules, git excludes).
+- Optionally installs core tooling (`opencode`, `mise`, `uv`, `specify-cli`, `openspec`).
+- Initializes a project with shared config (`opencode.json`, Cursor rules, git excludes) and configures OpenSpec for `opencode` with the extended workflow profile.
 
 ## Quick start
 

@@ -40,6 +40,112 @@ _install_specify_cli() {
   uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@${version}"
 }
 
+_install_openspec() {
+  if command -v openspec &>/dev/null && openspec --version &>/dev/null; then return; fi
+
+  if command -v npm &>/dev/null; then
+    echo "Installing openspec..."
+    npm install -g @fission-ai/openspec@latest
+    return
+  fi
+
+  if command -v mise &>/dev/null; then
+    echo "Installing openspec via mise (node@20)..."
+    mise x node@20 -- npm install -g @fission-ai/openspec@latest --prefix "$HOME/.local"
+    return
+  fi
+
+  echo "Skipping openspec install: neither npm nor mise is available on PATH."
+}
+
+_run_openspec() {
+  if command -v openspec &>/dev/null && command -v node &>/dev/null; then
+    openspec "$@"
+    return
+  fi
+
+  if command -v mise &>/dev/null; then
+    mise x node@20 -- openspec "$@"
+    return
+  fi
+
+  return 127
+}
+
+_run_node() {
+  if command -v node &>/dev/null; then
+    node "$@"
+    return
+  fi
+
+  if command -v mise &>/dev/null; then
+    mise x node@20 -- node "$@"
+    return
+  fi
+
+  return 127
+}
+
+_configure_openspec_extended_profile() {
+  local config_path
+  if ! config_path="$(_run_openspec config path 2>/dev/null)"; then
+    return 1
+  fi
+
+  mkdir -p "$(dirname "$config_path")"
+  _run_node - "$config_path" <<'EOF'
+const fs = require('fs');
+const configPath = process.argv[2];
+const workflows = [
+  'propose',
+  'explore',
+  'new',
+  'continue',
+  'apply',
+  'ff',
+  'sync',
+  'archive',
+  'bulk-archive',
+  'verify',
+  'onboard',
+];
+
+let config = {};
+if (fs.existsSync(configPath)) {
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch {
+    config = {};
+  }
+}
+
+config.profile = 'custom';
+if (!config.delivery) {
+  config.delivery = 'both';
+}
+config.workflows = workflows;
+
+fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+EOF
+}
+
+_init_openspec_for_opencode() {
+  # Non-interactive setup for OpenCode installs OpenSpec skills + opsx commands
+  # under .opencode/.
+  if ! _run_openspec --version >/dev/null 2>&1; then
+    echo "Skipping openspec project init: openspec runtime is not available."
+    return
+  fi
+
+  if ! _configure_openspec_extended_profile >/dev/null 2>&1; then
+    echo "Warning: could not configure openspec extended workflow profile."
+  fi
+
+  if ! _run_openspec init --tools opencode --profile custom >/dev/null 2>&1; then
+    echo "Warning: openspec init for opencode failed; run 'openspec init --tools opencode --profile custom' manually."
+  fi
+}
+
 _ensure_path_dir_on_path() {
   local dir="$1"
   local snippet="export PATH=\"$dir:\$PATH\""
@@ -75,6 +181,7 @@ install_stack() {
     _install_mise
     _install_uv
     _install_specify_cli
+    _install_openspec
   fi
 
   if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
@@ -86,6 +193,7 @@ init_project() {
   cp -n "$STACK_DIR/templates/project/opencode.json" ./opencode.json
   mkdir -p .cursor/rules
   cp -n "$STACK_DIR/templates/project/.cursor/rules/dev-stack.md" .cursor/rules/dev-stack.md
+  _init_openspec_for_opencode
   touch .git/info/exclude
   grep -qxF ".env.local" .git/info/exclude || echo ".env.local" >> .git/info/exclude
   grep -qxF ".opencode-auth.json" .git/info/exclude || echo ".opencode-auth.json" >> .git/info/exclude
